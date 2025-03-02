@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import AccountCredentials from '@/components/AccountCredentials';
 import TradesList from '@/components/TradesList';
 
@@ -51,7 +51,7 @@ export default function Dashboard() {
         unsubscribeAccounts();
       };
     }
-  }, [user]);
+  }, [user, selectedAccount]);
 
   useEffect(() => {
     if (user && selectedAccount) {
