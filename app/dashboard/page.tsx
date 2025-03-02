@@ -64,13 +64,21 @@ export default function Dashboard() {
   useEffect(() => {
     if (user && selectedAccount) {
       // Listen for trades from the selected account
+      console.log(`Setting up listener for trades for account: ${selectedAccount}`);
+      
       const tradesRef = collection(db, 'users', user.uid, 'mt4Accounts', selectedAccount, 'trades');
       const unsubscribeTrades = onSnapshot(tradesRef, (snapshot) => {
+        console.log(`Trades snapshot received, docs count: ${snapshot.docs.length}`);
+        
         const tradesData = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
+        
+        console.log("Trades data:", tradesData);
         setTrades(tradesData);
+      }, (error) => {
+        console.error("Error listening to trades:", error);
       });
 
       return () => {
@@ -92,6 +100,25 @@ export default function Dashboard() {
       }]);
     }
   }, [accounts]);
+
+  useEffect(() => {
+    // For debugging: Add a test trade if none are found
+    if (trades.length === 0 && selectedAccount) {
+      console.log("No trades found, adding a test trade for debugging");
+      setTrades([{
+        id: '12345',
+        ticket: '12345',
+        symbol: 'EURUSD',
+        type: 0, // Buy
+        lots: 0.1,
+        openPrice: 1.12345,
+        openTime: new Date().toISOString(),
+        status: 'open',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }]);
+    }
+  }, [trades, selectedAccount]);
 
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;

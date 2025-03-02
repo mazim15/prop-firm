@@ -114,6 +114,79 @@ exports.handler = async (event, context) => {
       }
     }
     
+    // Inside your exports.handler function, add this code to handle trade data
+    if (formData.get('action') === 'new') {
+      console.log("Processing new trade data");
+      
+      const token = formData.get('token');
+      if (!token) {
+        return {
+          statusCode: 401,
+          headers,
+          body: JSON.stringify({ error: 'Authentication required' }),
+        };
+      }
+      
+      try {
+        // Decode token to get userId and accountId
+        const decoded = Buffer.from(token, 'base64').toString('utf-8').split(':');
+        const userId = decoded[0];
+        const accountId = decoded[1];
+        
+        console.log(`Processing trade for user: ${userId}, account: ${accountId}`);
+        
+        // Extract trade data
+        const ticket = formData.get('ticket');
+        const symbol = formData.get('symbol');
+        const type = parseInt(formData.get('type'));
+        const lots = parseFloat(formData.get('lots'));
+        const openPrice = parseFloat(formData.get('openPrice'));
+        const openTime = formData.get('openTime');
+        const stopLoss = parseFloat(formData.get('stopLoss')) || 0;
+        const takeProfit = parseFloat(formData.get('takeProfit')) || 0;
+        const comment = formData.get('comment') || '';
+        const magic = parseInt(formData.get('magic')) || 0;
+        
+        console.log(`Trade details: Ticket=${ticket}, Symbol=${symbol}, Type=${type}, Lots=${lots}`);
+        
+        // Save trade to Firestore
+        const tradeRef = db.collection('users').doc(userId)
+          .collection('mt4Accounts').doc(accountId)
+          .collection('trades').doc(ticket);
+          
+        await tradeRef.set({
+          ticket,
+          symbol,
+          type,
+          lots,
+          openPrice,
+          openTime,
+          stopLoss,
+          takeProfit,
+          comment,
+          magic,
+          status: 'open',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+        
+        console.log(`Trade ${ticket} saved successfully`);
+        
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ success: true }),
+        };
+      } catch (error) {
+        console.error('Error processing trade:', error);
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: 'Failed to process trade' }),
+        };
+      }
+    }
+    
     // For any other request, just return success
     return {
       statusCode: 200,

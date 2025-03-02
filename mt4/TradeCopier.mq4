@@ -77,11 +77,13 @@ void OnTick()
    if(currentOrdersTotal > lastOrdersTotal)
    {
       // New order detected
+      Print("New order detected. Total orders: ", currentOrdersTotal, " (was ", lastOrdersTotal, ")");
       CheckAndSendNewOrders();
    }
    else if(currentOrdersTotal < lastOrdersTotal)
    {
       // Order closed or deleted
+      Print("Order closed or deleted. Total orders: ", currentOrdersTotal, " (was ", lastOrdersTotal, ")");
       SendOrderUpdates();
    }
    else
@@ -166,6 +168,7 @@ bool Authenticate()
 //+------------------------------------------------------------------+
 void CheckAndSendNewOrders()
 {
+   Print("Checking for new orders...");
    for(int i = 0; i < OrdersTotal(); i++)
    {
       if(OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
@@ -173,6 +176,7 @@ void CheckAndSendNewOrders()
          // Check if this is a new order
          if(OrderOpenTime() > TimeCurrent() - 60) // Opened in the last minute
          {
+            Print("Found new order: Ticket=", OrderTicket(), ", Symbol=", OrderSymbol(), ", Type=", OrderType());
             SendOrderData(OrderTicket());
          }
       }
@@ -209,6 +213,10 @@ void SendOrderData(int ticket)
    
    StringToCharArray(postData, data, 0, StringLen(postData));
    
+   Print("Sending trade data for ticket: ", ticket);
+   Print("URL: ", url);
+   Print("Data: ", postData);
+   
    int res = WebRequest("POST", url, headers, 5000, data, result, headers);
    
    if(res == -1)
@@ -217,7 +225,9 @@ void SendOrderData(int ticket)
    }
    else
    {
-      Print("Order data sent successfully for ticket: ", ticket);
+      string response = CharArrayToString(result, 0, ArraySize(result));
+      Print("Trade data sent successfully for ticket: ", ticket);
+      Print("Server response: ", response);
    }
 }
 
