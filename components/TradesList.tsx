@@ -21,7 +21,7 @@ interface Trade {
 
 interface TradesListProps {
   trades: Trade[];
-  accountId: string | null;
+  accountId: string | undefined;
 }
 
 export default function TradesList({ trades, accountId }: TradesListProps) {

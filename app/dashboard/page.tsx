@@ -15,7 +15,7 @@ export default function Dashboard() {
   const [mt4Credentials, setMt4Credentials] = useState<{ username: string; password: string } | null>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [trades, setTrades] = useState<any[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState<string | undefined>(undefined);
+  const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -172,7 +172,7 @@ export default function Dashboard() {
           </div>
 
           <div className="md:col-span-2">
-            <TradesList trades={trades} accountId={selectedAccount} />
+            <TradesList trades={trades} accountId={selectedAccount as string | null} />
           </div>
         </div>
       </main>
