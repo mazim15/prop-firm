@@ -172,7 +172,7 @@ export default function Dashboard() {
           </div>
 
           <div className="md:col-span-2">
-            <TradesList trades={trades} accountId={selectedAccount as string | null} />
+            <TradesList trades={trades} accountId={selectedAccount === null ? undefined : selectedAccount} />
           </div>
         </div>
       </main>
