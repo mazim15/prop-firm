@@ -15,7 +15,7 @@ export default function Dashboard() {
   const [mt4Credentials, setMt4Credentials] = useState<{ username: string; password: string } | null>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [trades, setTrades] = useState<any[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (!loading && !user) {

@@ -13,7 +13,7 @@ interface Account {
 interface ConnectedAccountsProps {
   accounts: Account[];
   onSelectAccount?: (accountId: string) => void;
-  selectedAccount?: string;
+  selectedAccount?: string | null;
 }
 
 export default function ConnectedAccounts({ 
