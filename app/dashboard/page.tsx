@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import AccountCredentials from '@/components/AccountCredentials';
 import TradesList from '@/components/TradesList';
+import ConnectedAccounts from '@/components/ConnectedAccounts';
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth();
@@ -152,40 +153,14 @@ export default function Dashboard() {
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          <div className="md:col-span-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-1 space-y-6">
             <AccountCredentials credentials={mt4Credentials} />
-            
-            <div className="mt-8 bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Connected Accounts</h2>
-              {accounts.length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400">No accounts connected yet.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {accounts.map((account) => (
-                    <li key={account.id}>
-                      <button
-                        onClick={() => setSelectedAccount(account.id)}
-                        className={`w-full text-left px-3 py-2 rounded-md ${
-                          selectedAccount === account.id
-                            ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200'
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        <div className="font-medium">Account: {account.id}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          Terminal: {account.terminal}
-                        </div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <ConnectedAccounts accounts={accounts} />
           </div>
 
           <div className="md:col-span-2">
-            <TradesList trades={trades} selectedAccount={selectedAccount} />
+            <TradesList trades={trades} accountId={selectedAccount} />
           </div>
         </div>
       </main>
