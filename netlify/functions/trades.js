@@ -118,34 +118,81 @@ exports.handler = async (event, context) => {
     if (formData.get('action') === 'new') {
       console.log("Processing new trade data");
       
-      const token = formData.get('token');
-      if (!token) {
-        return {
-          statusCode: 401,
-          headers,
-          body: JSON.stringify({ error: 'Authentication required' }),
-        };
-      }
-      
       try {
-        // Decode token to get userId and accountId
-        const decoded = Buffer.from(token, 'base64').toString('utf-8').split(':');
-        const userId = decoded[0];
-        const accountId = decoded[1];
+        // Log all form data for debugging
+        console.log("All form data:");
+        for (const [key, value] of formData.entries()) {
+          console.log(`${key}: ${value}`);
+        }
+        
+        const token = formData.get('token');
+        if (!token) {
+          console.log("No token provided");
+          return {
+            statusCode: 401,
+            headers,
+            body: JSON.stringify({ error: 'Authentication required' }),
+          };
+        }
+        
+        console.log("Token:", token);
+        
+        // Decode token with error handling
+        let userId, accountId;
+        try {
+          const decoded = Buffer.from(token, 'base64').toString('utf-8').split(':');
+          console.log("Decoded token:", decoded);
+          
+          userId = decoded[0];
+          accountId = decoded[1];
+          
+          if (!userId || !accountId) {
+            throw new Error("Invalid token format");
+          }
+        } catch (tokenError) {
+          console.error("Token decoding error:", tokenError);
+          return {
+            statusCode: 401,
+            headers,
+            body: JSON.stringify({ error: 'Invalid authentication token' }),
+          };
+        }
         
         console.log(`Processing trade for user: ${userId}, account: ${accountId}`);
         
-        // Extract trade data
+        // Extract trade data with validation
         const ticket = formData.get('ticket');
-        const symbol = formData.get('symbol');
-        const type = parseInt(formData.get('type'));
-        const lots = parseFloat(formData.get('lots'));
-        const openPrice = parseFloat(formData.get('openPrice'));
-        const openTime = formData.get('openTime');
-        const stopLoss = parseFloat(formData.get('stopLoss')) || 0;
-        const takeProfit = parseFloat(formData.get('takeProfit')) || 0;
+        if (!ticket) {
+          console.error("Missing ticket number");
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ error: 'Missing ticket number' }),
+          };
+        }
+        
+        // For testing, just log the data and return success
+        console.log(`Received trade data for ticket ${ticket}`);
+        console.log(`User: ${userId}, Account: ${accountId}`);
+        
+        // Return success without trying to write to Firebase yet
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ success: true, message: 'Trade data received (test mode)' }),
+        };
+        
+        /* Commented out for testing
+        // Extract and validate other trade data
+        const symbol = formData.get('symbol') || 'UNKNOWN';
+        const type = parseInt(formData.get('type') || '0');
+        const lots = parseFloat(formData.get('lots') || '0.01');
+        const openPrice = parseFloat(formData.get('openPrice') || '0');
+        const openTime = formData.get('openTime') || new Date().toISOString();
+        const stopLoss = parseFloat(formData.get('stopLoss') || '0');
+        const takeProfit = parseFloat(formData.get('takeProfit') || '0');
         const comment = formData.get('comment') || '';
-        const magic = parseInt(formData.get('magic')) || 0;
+        const magic = parseInt(formData.get('magic') || '0');
         
         console.log(`Trade details: Ticket=${ticket}, Symbol=${symbol}, Type=${type}, Lots=${lots}`);
         
@@ -177,12 +224,20 @@ exports.handler = async (event, context) => {
           headers,
           body: JSON.stringify({ success: true }),
         };
+        */
       } catch (error) {
+        // Detailed error logging
         console.error('Error processing trade:', error);
+        console.error('Error stack:', error.stack);
+        
         return {
           statusCode: 500,
           headers,
-          body: JSON.stringify({ error: 'Failed to process trade' }),
+          body: JSON.stringify({ 
+            error: 'Failed to process trade',
+            message: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+          }),
         };
       }
     }
