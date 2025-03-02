@@ -49,45 +49,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      // Create or update user document in Firestore
-      const userRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        // Create new user with credentials
-        const credentials = {
-          username: `user_${user.uid.substring(0, 8)}`,
-          password: generateRandomPassword(),
-        };
-        
-        console.log("Creating new user with credentials:", credentials);
-        
-        await setDoc(userRef, {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-          createdAt: serverTimestamp(),
-          mt4Credentials: credentials,
-        });
-      } else if (!userSnap.data().mt4Credentials) {
-        // User exists but doesn't have credentials yet
-        const credentials = {
-          username: `user_${user.uid.substring(0, 8)}`,
-          password: generateRandomPassword(),
-        };
-        
-        console.log("Adding credentials to existing user:", credentials);
-        
-        await setDoc(userRef, {
-          mt4Credentials: credentials
-        }, { merge: true });
-      }
-    } catch (error: any) {
-      console.error('Error signing in with Google', error);
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Error signing in with Google:", error);
     }
   };
 
