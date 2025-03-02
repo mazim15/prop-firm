@@ -154,6 +154,16 @@ bool Authenticate()
       
       Print("Authentication successful. Token received.");
       Print("Token: ", authToken);
+      
+      // Debug token format
+      string decodedToken = "";
+      for(int i=0; i<StringLen(authToken); i+=4)
+      {
+         string chunk = StringSubstr(authToken, i, MathMin(4, StringLen(authToken)-i));
+         decodedToken += chunk + " ";
+      }
+      Print("Token in chunks: ", decodedToken);
+      
       isAuthenticated = true;
       return true;
    }
