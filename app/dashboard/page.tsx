@@ -96,39 +96,6 @@ export default function Dashboard() {
     }
   }, [user, selectedAccount]);
 
-  useEffect(() => {
-    // For debugging: Add a hardcoded account if none are found
-    if (accounts.length === 0) {
-      console.log("No accounts found, adding a test account for debugging");
-      setAccounts([{
-        id: '22625510',
-        accountId: '22625510',
-        terminal: 'MetaTrader 4',
-        lastConnected: new Date().toISOString(),
-        isActive: true
-      }]);
-    }
-  }, [accounts]);
-
-  useEffect(() => {
-    // For debugging: Add a test trade if none are found
-    if (trades.length === 0 && selectedAccount) {
-      console.log("No trades found, adding a test trade for debugging");
-      setTrades([{
-        id: '12345',
-        ticket: '12345',
-        symbol: 'EURUSD',
-        type: 0, // Buy
-        lots: 0.1,
-        openPrice: 1.12345,
-        openTime: new Date().toISOString(),
-        status: 'open',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }]);
-    }
-  }, [trades, selectedAccount]);
-
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
   }
