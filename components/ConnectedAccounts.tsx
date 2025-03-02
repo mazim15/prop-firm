@@ -12,12 +12,22 @@ interface Account {
 
 interface ConnectedAccountsProps {
   accounts: Account[];
+  onSelectAccount?: (accountId: string) => void;
+  selectedAccount?: string;
 }
 
-export default function ConnectedAccounts({ accounts }: ConnectedAccountsProps) {
+export default function ConnectedAccounts({ 
+  accounts, 
+  onSelectAccount,
+  selectedAccount 
+}: ConnectedAccountsProps) {
   const [expandedAccount, setExpandedAccount] = useState<string | null>(null);
 
-  const toggleExpand = (accountId: string) => {
+  const handleAccountClick = (accountId: string) => {
+    if (onSelectAccount) {
+      onSelectAccount(accountId);
+    }
+    
     if (expandedAccount === accountId) {
       setExpandedAccount(null);
     } else {
@@ -41,8 +51,10 @@ export default function ConnectedAccounts({ accounts }: ConnectedAccountsProps) 
         {accounts.map((account) => (
           <div 
             key={account.id} 
-            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-            onClick={() => toggleExpand(account.id)}
+            className={`border border-gray-200 dark:border-gray-700 rounded-lg p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
+              selectedAccount === account.id ? 'bg-blue-50 dark:bg-blue-900 border-blue-300 dark:border-blue-700' : ''
+            }`}
+            onClick={() => handleAccountClick(account.id)}
           >
             <div className="flex justify-between items-center">
               <div>

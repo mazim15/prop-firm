@@ -247,7 +247,89 @@ void SendOrderData(int ticket)
 void SendOrderUpdates()
 {
    // Implementation to detect closed orders and send updates
-   // This would require tracking previous orders and comparing
+   static int lastTickets[1000];
+   static int lastTicketsCount = 0;
+   
+   // First, build a list of current tickets
+   int currentTickets[1000];
+   int currentTicketsCount = 0;
+   
+   for(int i = 0; i < OrdersTotal(); i++)
+   {
+      if(OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+      {
+         currentTickets[currentTicketsCount++] = OrderTicket();
+      }
+   }
+   
+   // Find tickets that were in the last list but not in the current list (closed orders)
+   for(int i = 0; i < lastTicketsCount; i++)
+   {
+      bool found = false;
+      for(int j = 0; j < currentTicketsCount; j++)
+      {
+         if(lastTickets[i] == currentTickets[j])
+         {
+            found = true;
+            break;
+         }
+      }
+      
+      if(!found)
+      {
+         // This order is no longer open, it was closed
+         Print("Order closed: ", lastTickets[i]);
+         SendClosedOrderData(lastTickets[i]);
+      }
+   }
+   
+   // Update the last tickets list
+   for(int i = 0; i < currentTicketsCount; i++)
+   {
+      lastTickets[i] = currentTickets[i];
+   }
+   lastTicketsCount = currentTicketsCount;
+}
+
+void SendClosedOrderData(int ticket)
+{
+   // Try to select the order in history
+   if(!OrderSelect(ticket, SELECT_BY_TICKET, MODE_HISTORY))
+   {
+      Print("Could not find closed order in history: ", ticket);
+      return;
+   }
+   
+   string url = ServerURL;
+   string postData = 
+      "token=" + authToken +
+      "&action=close" +
+      "&ticket=" + IntegerToString(OrderTicket()) +
+      "&closePrice=" + DoubleToString(OrderClosePrice(), Digits) +
+      "&closeTime=" + TimeToString(OrderCloseTime()) +
+      "&profit=" + DoubleToString(OrderProfit(), 2) +
+      "&account=" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN));
+   
+   char data[];
+   char result[];
+   string headers = "Content-Type: application/x-www-form-urlencoded\r\n";
+   
+   StringToCharArray(postData, data, 0, StringLen(postData));
+   
+   Print("Sending closed trade data for ticket: ", ticket);
+   
+   int res = WebRequest("POST", url, headers, 5000, data, result, headers);
+   
+   if(res == -1)
+   {
+      Print("Error sending closed order data. Error code: ", GetLastError());
+   }
+   else
+   {
+      string response = CharArrayToString(result, 0, ArraySize(result));
+      Print("Closed trade data sent successfully for ticket: ", ticket);
+      Print("Server response: ", response);
+   }
 }
 
 //+------------------------------------------------------------------+
@@ -255,6 +337,91 @@ void SendOrderUpdates()
 //+------------------------------------------------------------------+
 void CheckForModifications()
 {
-   // Implementation to detect modifications in SL, TP, etc.
-   // This would require tracking previous order states and comparing
+   static double lastStopLoss[1000];
+   static double lastTakeProfit[1000];
+   static int lastTickets[1000];
+   static int lastCount = 0;
+   
+   // Build current state
+   int currentTickets[1000];
+   double currentStopLoss[1000];
+   double currentTakeProfit[1000];
+   int currentCount = 0;
+   
+   for(int i = 0; i < OrdersTotal(); i++)
+   {
+      if(OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+      {
+         currentTickets[currentCount] = OrderTicket();
+         currentStopLoss[currentCount] = OrderStopLoss();
+         currentTakeProfit[currentCount] = OrderTakeProfit();
+         currentCount++;
+      }
+   }
+   
+   // Check for modifications
+   for(int i = 0; i < currentCount; i++)
+   {
+      for(int j = 0; j < lastCount; j++)
+      {
+         if(currentTickets[i] == lastTickets[j])
+         {
+            if(currentStopLoss[i] != lastStopLoss[j] || currentTakeProfit[i] != lastTakeProfit[j])
+            {
+               // Order was modified
+               if(OrderSelect(currentTickets[i], SELECT_BY_TICKET))
+               {
+                  Print("Order modified: ", currentTickets[i]);
+                  SendModifiedOrderData(currentTickets[i]);
+               }
+            }
+            break;
+         }
+      }
+   }
+   
+   // Update last state
+   for(int i = 0; i < currentCount; i++)
+   {
+      lastTickets[i] = currentTickets[i];
+      lastStopLoss[i] = currentStopLoss[i];
+      lastTakeProfit[i] = currentTakeProfit[i];
+   }
+   lastCount = currentCount;
+}
+
+void SendModifiedOrderData(int ticket)
+{
+   if(!OrderSelect(ticket, SELECT_BY_TICKET))
+      return;
+      
+   string url = ServerURL;
+   string postData = 
+      "token=" + authToken +
+      "&action=modify" +
+      "&ticket=" + IntegerToString(OrderTicket()) +
+      "&stopLoss=" + DoubleToString(OrderStopLoss(), Digits) +
+      "&takeProfit=" + DoubleToString(OrderTakeProfit(), Digits) +
+      "&account=" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN));
+   
+   char data[];
+   char result[];
+   string headers = "Content-Type: application/x-www-form-urlencoded\r\n";
+   
+   StringToCharArray(postData, data, 0, StringLen(postData));
+   
+   Print("Sending modified trade data for ticket: ", ticket);
+   
+   int res = WebRequest("POST", url, headers, 5000, data, result, headers);
+   
+   if(res == -1)
+   {
+      Print("Error sending modified order data. Error code: ", GetLastError());
+   }
+   else
+   {
+      string response = CharArrayToString(result, 0, ArraySize(result));
+      Print("Modified trade data sent successfully for ticket: ", ticket);
+      Print("Server response: ", response);
+   }
 } 

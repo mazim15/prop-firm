@@ -64,10 +64,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user && selectedAccount) {
-      // Listen for trades from the selected account
       console.log(`Setting up listener for trades for account: ${selectedAccount}`);
       
       const tradesRef = collection(db, 'users', user.uid, 'mt4Accounts', selectedAccount, 'trades');
+      console.log(`Trades collection path: users/${user.uid}/mt4Accounts/${selectedAccount}/trades`);
+      
       const unsubscribeTrades = onSnapshot(tradesRef, (snapshot) => {
         console.log(`Trades snapshot received, docs count: ${snapshot.docs.length}`);
         
@@ -80,11 +81,18 @@ export default function Dashboard() {
         setTrades(tradesData);
       }, (error) => {
         console.error("Error listening to trades:", error);
+        console.error("Error details:", error.code, error.message);
       });
 
       return () => {
+        console.log(`Unsubscribing from trades for account: ${selectedAccount}`);
         unsubscribeTrades();
       };
+    } else {
+      console.log("Not setting up trades listener - missing user or selectedAccount", { 
+        hasUser: !!user, 
+        selectedAccount 
+      });
     }
   }, [user, selectedAccount]);
 
@@ -156,7 +164,11 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-1 space-y-6">
             <AccountCredentials credentials={mt4Credentials} />
-            <ConnectedAccounts accounts={accounts} />
+            <ConnectedAccounts 
+              accounts={accounts} 
+              onSelectAccount={setSelectedAccount}
+              selectedAccount={selectedAccount}
+            />
           </div>
 
           <div className="md:col-span-2">
