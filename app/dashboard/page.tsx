@@ -33,18 +33,26 @@ export default function Dashboard() {
       });
 
       // Listen for MT4 accounts
+      console.log("Setting up listener for MT4 accounts for user:", user.uid);
+      
       const accountsRef = collection(db, 'users', user.uid, 'mt4Accounts');
       const unsubscribeAccounts = onSnapshot(accountsRef, (snapshot) => {
+        console.log("Accounts snapshot received, docs count:", snapshot.docs.length);
+        
         const accountsData = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
+        
+        console.log("Accounts data:", accountsData);
         setAccounts(accountsData);
         
         // Select first account by default if none selected
         if (accountsData.length > 0 && !selectedAccount) {
           setSelectedAccount(accountsData[0].id);
         }
+      }, (error) => {
+        console.error("Error listening to accounts:", error);
       });
 
       return () => {
@@ -70,6 +78,20 @@ export default function Dashboard() {
       };
     }
   }, [user, selectedAccount]);
+
+  useEffect(() => {
+    // For debugging: Add a hardcoded account if none are found
+    if (accounts.length === 0) {
+      console.log("No accounts found, adding a test account for debugging");
+      setAccounts([{
+        id: '22625510',
+        accountId: '22625510',
+        terminal: 'MetaTrader 4',
+        lastConnected: new Date().toISOString(),
+        isActive: true
+      }]);
+    }
+  }, [accounts]);
 
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;

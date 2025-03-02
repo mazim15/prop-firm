@@ -130,40 +130,19 @@ bool Authenticate()
    
    if(res == -1)
    {
-      int error = GetLastError();
-      Print("Error in WebRequest. Error code: ", error);
-      
-      // Handle specific errors
-      if(error == 4060) // ERR_FUNCTION_NOT_ALLOWED_IN_TESTING_MODE
-      {
-         Print("WebRequest is not allowed in Strategy Tester. Please run on a live chart.");
-      }
-      else if(error == 4078) // ERR_WEBREQUEST_CONNECT_FAILED
-      {
-         Print("Failed to connect to server. Check your internet connection and server URL.");
-      }
-      else if(error == 4079) // ERR_WEBREQUEST_TIMEOUT
-      {
-         Print("Connection timeout. Server might be down or URL is incorrect.");
-      }
-      else if(error == 5200) // ERR_WEBREQUEST_INVALID_ADDRESS
-      {
-         Print("Invalid URL. Make sure the ServerURL parameter is correct.");
-      }
-      else if(error == 5013) // ERR_FUNCTION_NOT_CONFIRMED
-      {
-         Print("WebRequest not allowed. Please allow in Tools > Options > Expert Advisors > Allow WebRequest for listed URL.");
-         Print("Add this URL: ", ServerURL);
-      }
-      
-      isAuthenticated = false;
+      Print("Error in WebRequest. Error code: ", GetLastError());
       return false;
    }
    
-   string response = CharArrayToString(result);
+   string response = CharArrayToString(result, 0, ArraySize(result));
    Print("Server response: ", response);
    
-   // Parse JSON response to get auth token
+   // Log the full response for debugging
+   StringReplace(response, "\\", "\\\\");
+   StringReplace(response, "\"", "\\\"");
+   Print("Response (escaped): \"", response, "\"");
+   
+   // Try to parse the JSON response
    if(StringFind(response, "token") >= 0)
    {
       // Extract token from response
@@ -172,6 +151,7 @@ bool Authenticate()
       authToken = StringSubstr(response, startPos, endPos - startPos);
       
       Print("Authentication successful. Token received.");
+      Print("Token: ", authToken);
       isAuthenticated = true;
       return true;
    }

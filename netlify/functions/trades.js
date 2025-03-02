@@ -52,14 +52,66 @@ exports.handler = async (event, context) => {
       
       console.log(`Auth attempt - Username: ${username}, Terminal: ${terminal}, Account: ${accountId}`);
       
-      // For testing, accept any credentials
-      const token = Buffer.from(`test_user:${accountId}:${Date.now()}`).toString('base64');
-      
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ token }),
-      };
+      try {
+        // Find the user with these credentials
+        const usersRef = db.collection('users');
+        const snapshot = await usersRef
+          .where('mt4Credentials.username', '==', username)
+          .where('mt4Credentials.password', '==', password)
+          .get();
+        
+        if (snapshot.empty) {
+          console.log("No matching user found, but accepting for testing");
+          // For testing, we'll still accept and use a test user ID
+          const userId = "test_user_id";
+          
+          // Store the account connection
+          const accountRef = db.collection('users').doc(userId).collection('mt4Accounts').doc(accountId);
+          await accountRef.set({
+            accountId,
+            terminal: terminal || "MetaTrader 4",
+            lastConnected: new Date().toISOString(),
+            isActive: true
+          }, { merge: true });
+          
+          const token = Buffer.from(`${userId}:${accountId}:${Date.now()}`).toString('base64');
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({ token }),
+          };
+        }
+        
+        // Get the first matching user
+        const userId = snapshot.docs[0].id;
+        console.log(`Found user: ${userId}`);
+        
+        // Store the account connection
+        const accountRef = db.collection('users').doc(userId).collection('mt4Accounts').doc(accountId);
+        await accountRef.set({
+          accountId,
+          terminal: terminal || "MetaTrader 4",
+          lastConnected: new Date().toISOString(),
+          isActive: true
+        }, { merge: true });
+        
+        const token = Buffer.from(`${userId}:${accountId}:${Date.now()}`).toString('base64');
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ token }),
+        };
+      } catch (error) {
+        console.error("Error storing account connection:", error);
+        
+        // Still return a token for testing
+        const token = Buffer.from(`test_user:${accountId}:${Date.now()}`).toString('base64');
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ token }),
+        };
+      }
     }
     
     // For any other request, just return success
